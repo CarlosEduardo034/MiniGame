@@ -126,14 +126,17 @@
   <script>
     (function(){
   const sequence = [
-    {speaker:'', msg:'Clique para começar'},
-    {speaker:'Aeronave não identificada:', msg:'"Estamos em fuga, os KAPYBARIANOS estão nos perseguindo!"'},
-    {speaker:'Aeronave não identificada:', msg:'"Estamos com o a princesa deles, estamos fugindo a todo vapor!!"'},
-    {speaker:'Nave mãe inimiga:', msg:'"Cambio, responda Nave0018/11. Cambio, concluão a missão a todo custo! precisamos sequestrar a princesa Kapybariana!"'},
-    {speaker:'Central do planeta Capybaris:', msg:'"Soldado, salve a princesa. Derrube a neve dos sequestradores!"'},
-    {speaker:'Informação:', msg:'"Você é um soldado Kapybariano, sua missão é derrubar a nave sequestradora e salvar a princesa!"'},
-    {speaker:'', msg:'Clique para iniciar a missão...'} // <- REDIRECIONA AQUI
-  ];
+        {speaker:'', msg:'Clique para começar'},
+        {speaker:'Aeronave não identificada:', msg:'"ATENÇÃO NAVE MÃE FOMOS ATINGIDOS DURANTE A FUGA!!!!"'},
+        {speaker:'Aeronave não identificada:', msg:'"PERDEMOS O MOTOR DIREITO, E O ESQUEDO ESTÁ DANIFICADO..."'},
+        {speaker:'Nave mãe:', msg:'"Cambio, responda Nave0018/11. Cambio, a missão de captura foi conclúida?!"'},
+        {speaker:'Aeronave não identificada:', msg:'"Eles vão nos alcançar, não temos outra opção - aterrisagem de ermegencia - Vamos nos esconder no planeta azul do sistema Solar20-24A25, no catalogo universal o planeta tem o nome popular de TERRA"'},
+        {speaker:'Aeronave não identificada:', msg:'"Atenção vamos esconder a princesa Kapybariana lá, eles nunca irão nos encontrar em um planeta tão primitivo!"'},
+        {speaker:'Aeronave não identificada:', msg:'"Ficaremos no aguardo do resgate - Barulho de explosão - PHIIIIIIIIIIIIIIIIII..."'},
+        {speaker:'Nave mãe:', msg:'"Canal de voz encerrado - bip"'},
+        {speaker:'', msg:'*Nave cai na terra*'},
+        {speaker:'', msg:'Clique para recomeçar'}
+      ];
 
   let idx = 0;
   const speakerEl = document.getElementById('speaker');
@@ -221,7 +224,7 @@
 
     // 🔥 REDIRECIONAMENTO AQUI 🔥
     if (idx === sequence.length - 1) {
-      window.location.href = "jogo.html"; // << ALTERE O DESTINO AQUI
+      window.location.href = "index.html"; // << ALTERE O DESTINO AQUI
       return;
     }
 
