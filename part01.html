@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Diálogo — Nave (máquina de escrever)</title>
+  <style>
+    :root{
+      --bg:#000;
+      --fg:#fff;
+      --max-width:1200px;
+    }
+    html,body{height:100%;}
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--fg);
+      font-family: 'Courier New', Courier, monospace, system-ui;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      cursor:pointer;
+    }
+
+    .wrap{
+      width:100%;
+      max-width:var(--max-width);
+      padding:4vw;
+      box-sizing:border-box;
+    }
+
+    .card{
+      display:inline-block;
+      min-height:30vh;
+      max-height:80vh;
+      padding:4vh 3vw;
+      box-sizing:border-box;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      gap:1rem;
+    }
+
+    .speaker{
+      font-weight:700;
+      letter-spacing:0.04em;
+      text-transform:capitalize;
+      opacity:0.9;
+      font-size:clamp(0.9rem,1.8vw,1.1rem);
+      min-height:1.4em;
+    }
+
+    .message{
+      font-size:clamp(1.2rem,3.5vw,2.4rem);
+      line-height:1.2;
+      max-width:90ch;
+      white-space:pre-wrap;
+      opacity:0.98;
+      transform-origin:center;
+      transition:opacity .25s ease, transform .25s ease;
+      min-height:4.2em;
+    }
+
+    .cursor{
+      display:inline-block;
+      width:.6ch;
+      height:1em;
+      background:var(--fg);
+      margin-left:.2ch;
+      vertical-align:bottom;
+      opacity:0.9;
+      animation:blink 1s steps(2,start) infinite;
+    }
+
+    @keyframes blink{50%{opacity:0} }
+
+    .hint{
+      margin-top:2.25rem;
+      font-size:clamp(0.8rem,1.6vw,1rem);
+      opacity:0.6;
+    }
+
+    .fade-out{
+      opacity:0;
+      transform:scale(.995);
+    }
+
+    .footer-small{
+      position:fixed;
+      bottom:8px;
+      left:0;right:0;
+      text-align:center;
+      font-size:12px;
+      opacity:0.25;
+      pointer-events:none;
+    }
+
+    :focus{outline:none}
+    .sr-only{
+      position:absolute!important;
+      height:1px;width:1px;overflow:hidden;
+      clip:rect(1px,1px,1px,1px);white-space:nowrap;
+    }
+
+    @media (min-width:1000px){
+      .card{min-height:28vh}
+    }
+  </style>
+</head>
+<body id="page">
+  <div class="wrap">
+    <div class="card" role="dialog" aria-live="polite" aria-label="Diálogo de nave">
+      <div id="speaker" class="speaker"></div>
+      <div id="message" class="message"><span id="typed"></span><span id="cursor" class="cursor" aria-hidden="true"></span></div>
+      <div id="hint" class="hint">Clique / Toque para avançar</div>
+    </div>
+  </div>
+
+  <div class="footer-small">Pressione Enter ou Espaço também para avançar</div>
+  <div class="sr-only" id="a11y">Use o mouse, toque ou tecla Enter para avançar a fala.</div>
+
+  <script>
+    (function(){
+  const sequence = [
+    {speaker:'', msg:'Clique para começar'},
+    {speaker:'Aeronave não identificada:', msg:'"Estamos em fuga, os KAPYBARIANOS estão nos perseguindo!"'},
+    {speaker:'Aeronave não identificada:', msg:'"Estamos com o a princesa deles, estamos fugindo a todo vapor!!"'},
+    {speaker:'Nave mãe inimiga:', msg:'"Cambio, responda Nave0018/11. Cambio, concluão a missão a todo custo! precisamos sequestrar a princesa Kapybariana!"'},
+    {speaker:'Central do planeta Capybaris:', msg:'"Soldado, salve a princesa. Derrube a neve dos sequestradores!"'},
+    {speaker:'Informação:', msg:'"Você é um soldado Kapybariano, sua missão é derrubar a nave sequestradora e salvar a princesa!"'},
+    {speaker:'', msg:'Clique para iniciar a missão...'} // <- REDIRECIONA AQUI
+  ];
+
+  let idx = 0;
+  const speakerEl = document.getElementById('speaker');
+  const typedEl = document.getElementById('typed');
+  const cursorEl = document.getElementById('cursor');
+  const hintEl = document.getElementById('hint');
+  const page = document.getElementById('page');
+
+  let isTyping = false;
+  let charIndex = 0;
+  let typingTimer = null;
+  const baseSpeed = 28; // ms per char
+
+  function typeCurrent(callback){
+    const item = sequence[idx] || {speaker:'', msg:''};
+    const text = item.msg || '';
+    charIndex = 0;
+    isTyping = true;
+    typedEl.textContent = '';
+    speakerEl.textContent = item.speaker;
+
+    function nextChar(){
+      if(charIndex >= text.length){
+        finishTyping();
+        if(callback) callback();
+        return;
+      }
+      const ch = text.charAt(charIndex);
+      typedEl.textContent += ch;
+      charIndex++;
+
+      let delay = baseSpeed;
+      if(ch === ',' || ch === ';') delay = baseSpeed * 6;
+      if(ch === '.' || ch === '!' || ch === '?') delay = baseSpeed * 8;
+      if(ch === ' '){
+        delay = baseSpeed + Math.floor(Math.random()*12);
+      }
+
+      typingTimer = setTimeout(nextChar, delay);
+    }
+
+    nextChar();
+  }
+
+  function finishTyping(){
+    if(!isTyping) return;
+    clearTimeout(typingTimer);
+    const item = sequence[idx] || {speaker:'', msg:''};
+    typedEl.textContent = item.msg || '';
+    isTyping = false;
+  }
+
+  function render(){
+    const item = sequence[idx] || {speaker:'', msg:''};
+    typedEl.parentElement.classList.add('fade-out');
+    speakerEl.classList.add('fade-out');
+    hintEl.classList.add('fade-out');
+
+    setTimeout(()=>{
+      speakerEl.textContent = '';
+      typedEl.textContent = '';
+      typedEl.parentElement.classList.remove('fade-out');
+      speakerEl.classList.remove('fade-out');
+      hintEl.classList.remove('fade-out');
+
+      if(idx === 0){
+        hintEl.textContent = 'Clique / Toque para começar';
+      } else if (idx === sequence.length -1){
+        hintEl.textContent = 'Clique para iniciar a missão';
+      } else {
+        hintEl.textContent = 'Clique / Toque para avançar';
+      }
+
+      typeCurrent();
+    },160);
+  }
+
+  function next(){
+
+    // Se ainda está digitando → pular para o fim da digitação
+    if(isTyping){
+      finishTyping();
+      return;
+    }
+
+    // 🔥 REDIRECIONAMENTO AQUI 🔥
+    if (idx === sequence.length - 1) {
+      window.location.href = "jogo.html"; // << ALTERE O DESTINO AQUI
+      return;
+    }
+
+    idx++;
+    render();
+  }
+
+  page.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    next();
+  }, {passive:false});
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.code === 'Enter' || e.code === 'Space'){
+      e.preventDefault();
+      next();
+    }
+  });
+
+  render();
+
+  const observer = new MutationObserver(()=>{
+    const sr = document.getElementById('a11y');
+    sr.textContent = 'Falando: ' + (speakerEl.textContent ? speakerEl.textContent + ' ' : '') + typedEl.textContent;
+  });
+  observer.observe(typedEl, {characterData:true, subtree:true, childList:true});
+
+  document.addEventListener('selectstart', (e)=>e.preventDefault());
+
+})();
+
+  </script>
+</body>
+</html>

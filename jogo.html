@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jogo de Naves Simples</title>
+    <style>
+        body {
+            margin: 0;
+            background: black;
+            overflow: hidden;
+            touch-action: none;
+            /* garante melhor controle no mobile */
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            color: #fff;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background: black;
+        }
+
+        /* overlay grande de início para garantir interação do usuário */
+        #startOverlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            cursor: pointer;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        #startOverlay h1 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: .02em;
+        }
+
+        #startOverlay p {
+            margin: 0;
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        #startOverlay small {
+            opacity: 0.6;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Áudio local (arquivo: musica.mp3 no mesmo diretório) -->
+    <audio id="bgm" src="musica.mp3" loop preload="auto" playsinline></audio>
+
+    <!-- Overlay de início (aperta uma vez para autorizar áudio e iniciar o jogo) -->
+    <div id="startOverlay" aria-hidden="false">
+        <div style="text-align:center">
+            <h1>Toque para iniciar</h1>
+            <p>Toque na tela para liberar o áudio e começar o jogo</p>
+            <small>Se o áudio não tocar, verifique se o arquivo <strong>musica.mp3</strong> está no mesmo
+                diretório.</small>
+        </div>
+    </div>
+
+    <canvas id="game"></canvas>
+
+    <script>
+        const bgm = document.getElementById('bgm');
+        bgm.volume = 0.4;
+
+        const imgPlayer = new Image();
+        imgPlayer.src = "nave01.png";
+
+        const imgEnemy = new Image();
+        imgEnemy.src = "nave02.png";
+
+        async function tryPlayAudio() {
+            try {
+                bgm.load();
+                await bgm.play();
+                console.log('bgm: tocando');
+            } catch (err) {
+                // falha ao tocar (provavelmente bloqueio do navegador)
+                console.warn('bgm: falha ao tocar automaticamente — aguarde gesto do usuário.', err);
+            }
+        }
+
+        // Overlay para garantir gesto do usuário
+        const overlay = document.getElementById('startOverlay');
+
+        async function startFromUserGesture() {
+            // tenta tocar o áudio (gesture)
+            await tryPlayAudio();
+
+            // remove overlay
+            overlay.style.display = 'none';
+            overlay.setAttribute('aria-hidden', 'true');
+
+            // remove o listener de início
+            window.removeEventListener('pointerdown', startFromUserGesture);
+            window.removeEventListener('keydown', startFromUserGesture);
+
+            // foco no canvas para facilitar controles por teclado
+            const cvs = document.getElementById('game');
+            if (cvs) cvs.focus && cvs.focus();
+        }
+
+        // ligar o evento no primeiro toque/ clique / teclado (Enter/Espaço)
+        window.addEventListener('pointerdown', startFromUserGesture, { once: true, passive: true });
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Enter' || e.code === 'Space') {
+                startFromUserGesture();
+            }
+        }, { once: true });
+
+        // Também tentamos com um clique normal (compatibilidade)
+        overlay.addEventListener('click', startFromUserGesture, { once: true });
+
+        // ---------------------------
+        // JOGO (seu código, adaptado)
+        // ---------------------------
+        const canvas = document.getElementById("game");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = 400;
+        canvas.height = 600;
+
+        // NAVE DO JOGADOR
+        const player = {
+            x: canvas.width / 2 - 20,
+            y: canvas.height - 60,
+            width: 40,
+            height: 40,
+            speed: 6
+        };
+
+        // NAVE INIMIGA
+        const enemy = {
+            x: canvas.width / 2 - 25,
+            y: 40,
+            width: 50,
+            height: 50,
+            dir: 1,
+            speed: 5,
+            hits: 0
+        };
+
+        let bullets = [];
+        let gameOver = false;
+        let win = false;
+
+        let dragging = false; // mover com mouse/touch
+
+        //-----------------------------------------------------------
+        //  DESENHO
+        //-----------------------------------------------------------
+        function drawPlayer() {
+            ctx.drawImage(imgPlayer, player.x, player.y, player.width, player.height);
+
+        }
+
+        function drawEnemy() {
+            ctx.drawImage(imgEnemy, enemy.x, enemy.y, enemy.width, enemy.height);
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = "white";
+            bullets.forEach((b) => {
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+            });
+        }
+
+        function drawHitCounter() {
+            ctx.fillStyle = "white";
+            ctx.font = "20px Arial";
+            ctx.textAlign = "right";
+            ctx.fillText("Hits: " + enemy.hits + "/8", canvas.width - 10, 25);
+        }
+
+        //-----------------------------------------------------------
+        //  ATUALIZAÇÃO
+        //-----------------------------------------------------------
+        function updatePlayer() {
+            // nada aqui — movimento é feito pelo mouse/touch
+        }
+
+        function updateEnemy() {
+            enemy.x += enemy.dir * enemy.speed;
+            if (enemy.x <= 0 || enemy.x + enemy.width >= canvas.width) {
+                enemy.dir *= -1;
+            }
+        }
+
+        function updateBullets() {
+            bullets.forEach((b) => b.y -= b.speed);
+            bullets = bullets.filter((b) => b.y > -20);
+        }
+
+        let canClick = false;
+
+        function detectHit() {
+            bullets.forEach(b => {
+                if (
+                    b.x < enemy.x + enemy.width &&
+                    b.x + b.w > enemy.x &&
+                    b.y < enemy.y + enemy.height &&
+                    b.y + b.h > enemy.y
+                ) {
+                    enemy.hits++;
+                    b.y = -999;
+
+                    if (enemy.hits >= 8) {
+                        win = true;
+                        typewriterExplosion(); // inicia animação
+                    }
+                }
+            });
+        }
+
+        function typewriterExplosion() {
+            const fullText = "BOOM! VOCÊ DERRUBOU O INIMIGO!";
+            const message2 = "Clique para continuar...";
+            let index = 0;
+
+            // fonte proporcional ao canvas (em px reais, não em device pixels)
+            function getFontSizeMain() {
+                return Math.max(18, Math.floor(Math.min(canvas.width, canvas.height) * 0.06)); // ajusta se quiser
+            }
+            function getFontSizeSmall() {
+                return Math.max(12, Math.floor(Math.min(canvas.width, canvas.height) * 0.035));
+            }
+
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            const padding = 40; // margem horizontal
+
+            // divide texto em linhas que caibam no canvas
+            function wrapTextForFont(text, fontSize) {
+                ctx.font = fontSize + "px Arial";
+                const words = text.split(' ');
+                const lines = [];
+                let current = '';
+
+                for (const w of words) {
+                    const test = current ? current + ' ' + w : w;
+                    if (ctx.measureText(test).width > (canvas.width - padding * 2)) {
+                        if (current) lines.push(current);
+                        current = w;
+                    } else {
+                        current = test;
+                    }
+                }
+                if (current) lines.push(current);
+                return lines;
+            }
+
+            // Pre-calc linhas completas para posicionamento final
+            const fontMain = getFontSizeMain();
+            const wrappedFull = wrapTextForFont(fullText, fontMain);
+            const fontSmall = getFontSizeSmall();
+
+            // animação de máquina de escrever: vamos mostrar caracteres progressivamente,
+            // mas posicionar/embalar por palavras para evitar cortar palavras ao meio visualmente.
+            function type() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // calc font e linhas para o trecho parcial
+                ctx.fillStyle = "white";
+                ctx.font = fontMain + "px Arial";
+
+                const partial = fullText.substring(0, index);
+                const partialWrapped = wrapTextForFont(partial, fontMain);
+
+                // calculo vertical: centralizar bloco (considerando lineHeight)
+                const lineHeight = fontMain * 1.1; // ajuste se quiser mais espaçamento
+                const totalHeight = partialWrapped.length * lineHeight;
+                const startY = canvas.height / 2 - totalHeight / 2;
+
+                // desenha cada linha do parcial
+                for (let i = 0; i < partialWrapped.length; i++) {
+                    const line = partialWrapped[i];
+                    ctx.fillText(line, canvas.width / 2, startY + i * lineHeight);
+                }
+
+                index++;
+
+                if (index <= fullText.length) {
+                    // animação suave (velocidade)
+                    setTimeout(type, 40);
+                } else {
+                    // texto completo desenhado — mostrar a mensagem pequena depois de um pequeno delay
+                    setTimeout(() => {
+                        // redesenha o texto completo (garante que esteja estático)
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.font = fontMain + "px Arial";
+                        for (let i = 0; i < wrappedFull.length; i++) {
+                            ctx.fillText(wrappedFull[i], canvas.width / 2, canvas.height / 2 - (wrappedFull.length - 1) * fontMain * 0.55 + i * fontMain * 1.1);
+                        }
+
+                        // desenha mensagem pequena logo abaixo do bloco
+                        ctx.font = fontSmall + "px Arial";
+                        const smallY = canvas.height / 2 + (wrappedFull.length * fontMain * 0.6) + 10;
+                        ctx.fillText(message2, canvas.width / 2, smallY);
+
+                        // libera clique após 1.5s
+                        setTimeout(() => {
+                            canClick = true;
+                            window.addEventListener(
+                                "click",
+                                () => {
+                                    if (canClick) {
+                                        try { bgm.pause(); } catch (e) { }
+                                        window.location.href = "index.html";
+                                    }
+                                },
+                                { once: true }
+                            );
+                        }, 1500);
+
+                    }, 200);
+                }
+            }
+
+            type();
+        }
+
+        //-----------------------------------------------------------
+        //  GAME LOOP
+        //-----------------------------------------------------------
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (win) {
+                // durante vitória, typewriterExplosion já cuida do desenho da mensagem
+                return;
+            }
+
+            updatePlayer();
+            updateEnemy();
+            updateBullets();
+            detectHit();
+
+            drawPlayer();
+            drawEnemy();
+            drawBullets();
+            drawHitCounter()
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        //-----------------------------------------------------------
+        //  TIROS AUTOMÁTICOS
+        //-----------------------------------------------------------
+        setInterval(() => {
+            if (!win) {
+                bullets.push({
+                    x: player.x + player.width / 2 - 2,
+                    y: player.y - 10,
+                    w: 4,
+                    h: 10,
+                    speed: 8
+                });
+            }
+        }, 500);
+
+        //-----------------------------------------------------------
+        //  MOVIMENTO COM O MOUSE (PC)
+        //-----------------------------------------------------------
+        canvas.addEventListener("mousedown", (e) => {
+            dragging = true;
+            moverPara(e.clientX);
+        });
+
+        window.addEventListener("mouseup", () => {
+            dragging = false;
+        });
+
+        window.addEventListener("mousemove", (e) => {
+            if (dragging) moverPara(e.clientX);
+        });
+
+        //-----------------------------------------------------------
+        //  MOVIMENTO COM O TOQUE (CELULAR)
+        //-----------------------------------------------------------
+        canvas.addEventListener("touchstart", (e) => {
+            dragging = true;
+            const x = e.touches[0].clientX;
+            moverPara(x);
+        });
+
+        canvas.addEventListener("touchend", () => {
+            dragging = false;
+        });
+
+        canvas.addEventListener("touchmove", (e) => {
+            if (dragging) {
+                const x = e.touches[0].clientX;
+                moverPara(x);
+            }
+        });
+
+        //-----------------------------------------------------------
+        //  FUNÇÃO PARA MOVER A NAVE
+        //-----------------------------------------------------------
+        function moverPara(posX) {
+            const rect = canvas.getBoundingClientRect();
+            const xDentroCanvas = posX - rect.left;
+
+            player.x = xDentroCanvas - player.width / 2;
+
+            // limita dentro da tela
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+        }
+
+        //-----------------------------------------------------------
+        //  INICIAR JOGO
+        //-----------------------------------------------------------
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+
+</html>
