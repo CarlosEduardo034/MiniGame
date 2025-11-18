@@ -63,9 +63,6 @@
     <div id="startOverlay" aria-hidden="false">
         <div style="text-align:center">
             <h1>Toque para iniciar</h1>
-            <p>Toque na tela para liberar o áudio e começar o jogo</p>
-            <small>Se o áudio não tocar, verifique se o arquivo <strong>musica.mp3</strong> está no mesmo
-                diretório.</small>
         </div>
     </div>
 
@@ -225,8 +222,8 @@
         }
 
         function typewriterExplosion() {
-            const fullText = "BOOM! VOCÊ DERRUBOU O INIMIGO!";
-            const message2 = "Clique para continuar...";
+            const fullText = "INIMIGO DERROTADO!";
+            const message2 = "Toque para continuar...";
             let index = 0;
 
             // fonte proporcional ao canvas (em px reais, não em device pixels)

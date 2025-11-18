@@ -116,7 +116,7 @@
     <div class="card" role="dialog" aria-live="polite" aria-label="Diálogo de nave">
       <div id="speaker" class="speaker"></div>
       <div id="message" class="message"><span id="typed"></span><span id="cursor" class="cursor" aria-hidden="true"></span></div>
-      <div id="hint" class="hint">Clique / Toque para avançar</div>
+      <div id="hint" class="hint">Toque / Toque para avançar</div>
     </div>
   </div>
 
@@ -126,7 +126,7 @@
   <script>
     (function(){
   const sequence = [
-        {speaker:'', msg:'Clique para continuar...'},
+        {speaker:'', msg:'Toque para continuar...'},
         {speaker:'Aeronave não identificada:', msg:'"ATENÇÃO NAVE MÃE FOMOS ATINGIDOS DURANTE A FUGA!!!!"'},
         {speaker:'Aeronave não identificada:', msg:'"PERDEMOS O MOTOR DIREITO, E O ESQUEDO ESTÁ DANIFICADO..."'},
         {speaker:'Nave mãe:', msg:'"Cambio, responda Nave0018/11. Cambio, a missão de captura foi conclúida?!"'},
@@ -135,7 +135,7 @@
         {speaker:'Aeronave não identificada:', msg:'"Ficaremos no aguardo do resgate - Barulho de explosão - PHIIIIIIIIIIIIIIIIII..."'},
         {speaker:'Nave mãe:', msg:'"Canal de voz encerrado - bip"'},
         {speaker:'', msg:'*Nave cai na terra*'},
-        {speaker:'', msg:'Clique para recomeçar...'}
+        {speaker:'', msg:'Toque para recomeçar...'}
       ];
 
   let idx = 0;
@@ -203,11 +203,11 @@
       hintEl.classList.remove('fade-out');
 
       if(idx === 0){
-        hintEl.textContent = 'Clique / Toque para começar';
+        hintEl.textContent = 'Toque para começar';
       } else if (idx === sequence.length -1){
-        hintEl.textContent = 'Clique para iniciar a missão';
+        hintEl.textContent = 'Toque para iniciar a missão';
       } else {
-        hintEl.textContent = 'Clique / Toque para avançar';
+        hintEl.textContent = 'Toque para avançar';
       }
 
       typeCurrent();

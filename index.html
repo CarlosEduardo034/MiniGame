@@ -116,7 +116,7 @@
     <div class="card" role="dialog" aria-live="polite" aria-label="Diálogo de nave">
       <div id="speaker" class="speaker"></div>
       <div id="message" class="message"><span id="typed"></span><span id="cursor" class="cursor" aria-hidden="true"></span></div>
-      <div id="hint" class="hint">Clique / Toque para avançar</div>
+      <div id="hint" class="hint">Toque / Toque para avançar</div>
     </div>
   </div>
 
@@ -126,13 +126,13 @@
   <script>
     (function(){
   const sequence = [
-    {speaker:'', msg:'Clique para começar'},
+    {speaker:'', msg:'Toque para começar'},
     {speaker:'Aeronave não identificada:', msg:'"Estamos em fuga, os KAPYBARIANOS estão nos perseguindo!"'},
     {speaker:'Aeronave não identificada:', msg:'"Estamos com o a princesa deles, estamos fugindo a todo vapor!!"'},
-    {speaker:'Nave mãe inimiga:', msg:'"Cambio, responda Nave0018/11. Cambio, concluão a missão a todo custo! precisamos sequestrar a princesa Kapybariana!"'},
+    {speaker:'Nave mãe inimiga:', msg:'"Cambio, responda Nave0018/11. Cambio, conclua a missão a todo custo! precisamos sequestrar a princesa Kapybariana!"'},
     {speaker:'Central do planeta Capybaris:', msg:'"Soldado, salve a princesa. Derrube a neve dos sequestradores!"'},
     {speaker:'Informação:', msg:'"Você é um soldado Kapybariano, sua missão é derrubar a nave sequestradora e salvar a princesa!"'},
-    {speaker:'', msg:'Clique para iniciar a missão...'} 
+    {speaker:'', msg:'Toque para iniciar a missão...'} 
   ];
 
   let idx = 0;
@@ -200,11 +200,11 @@
       hintEl.classList.remove('fade-out');
 
       if(idx === 0){
-        hintEl.textContent = 'Clique / Toque para começar';
+        hintEl.textContent = 'Toque para começar';
       } else if (idx === sequence.length -1){
-        hintEl.textContent = 'Clique para iniciar a missão';
+        hintEl.textContent = 'Toque para iniciar a missão';
       } else {
-        hintEl.textContent = 'Clique / Toque para avançar';
+        hintEl.textContent = 'Toque para avançar';
       }
 
       typeCurrent();
